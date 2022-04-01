@@ -1,8 +1,5 @@
 package domain;
 
-import java.time.LocalDateTime;
-import java.util.Date;
-
 public class Person {
 
     private int id;

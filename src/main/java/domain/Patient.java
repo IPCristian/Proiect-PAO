@@ -1,14 +1,16 @@
 package domain;
 
-public class Pacient extends Person {
+public class Patient extends Person {
 
     private int doctor_id;
     private String diagnosis;
+    private Insurance insurance;
 
-    public Pacient(int id, String lastName, String firstName, String email, int age, int doctor_id, String diagnosis) {
+    public Patient(int id, String lastName, String firstName, String email, int age, int doctor_id, String diagnosis, Insurance insurance) {
         super(id, lastName, firstName, email, age);
         this.doctor_id = doctor_id;
         this.diagnosis = diagnosis;
+        this.insurance = insurance;
     }
 
     public int getDoctor_id() {

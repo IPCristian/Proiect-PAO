@@ -2,14 +2,12 @@ package persistence;
 
 public interface GenericRepository<T> {
 
-    public void add(T entity);
+    void add(T entity);
 
-    public T get(int id);
+    T get(int id);
 
-    public void update(T entity, int id);
+    void delete(int id);
 
-    public void delete(int id);
-
-    public int getSize();
+    int getSize();
 
 }

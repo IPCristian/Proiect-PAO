@@ -1,7 +1,6 @@
 package persistence;
 
 import domain.Doctor;
-import domain.Pacient;
 
 import java.util.Arrays;
 
@@ -19,7 +18,7 @@ public class DoctorRepository implements GenericRepository<Doctor> {
                 return;
             }
         }
-        Doctor[] doctorsTemp = Arrays.<Doctor,Doctor>copyOf(doctors, 2*doctors.length,Doctor[].class);
+        Doctor[] doctorsTemp = Arrays.copyOf(doctors, 2*doctors.length,Doctor[].class);
         doctorsTemp[doctors.length] = entity;
         doctors = doctorsTemp;
     }
@@ -29,16 +28,13 @@ public class DoctorRepository implements GenericRepository<Doctor> {
         return doctors[id];
     }
 
-    @Override
-    public void update(Doctor entity, int id) {
-        for (Doctor doctor : doctors) {
-            if (doctor.getId() == id) {
-                doctor.setLastName(entity.getLastName());
-                doctor.setFirstName(entity.getFirstName());
-                doctor.setEmail(entity.getEmail());
-                doctor.setAge(entity.getAge());
-                doctor.setYearsOfExperience(entity.getYearsOfExperience());
-                doctor.setSpecialization(entity.getSpecialization());
+    public void update_spec(int id, String Specialization) {
+
+        for (Doctor doctor : doctors)
+        {
+            if (doctor.getId() == id)
+            {
+                doctor.setSpecialization(Specialization);
                 break;
             }
         }
@@ -66,13 +62,24 @@ public class DoctorRepository implements GenericRepository<Doctor> {
     }
 
     public int getNumber() {
-        for (int i=0;i<doctors.length;i++)
-        {
-            if (doctors[i] == null)
-            {
-                return i;
+        int number = 0;
+        for (Doctor doctor : doctors) {
+            if (doctor != null) {
+                number++;
             }
         }
-        return 0;
+        return number;
+    }
+
+    public boolean getID(int id)
+    {
+        for (int i=0;i<doctors.length && doctors[i] != null;i++)
+        {
+            if (doctors[i].getId() == id)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
