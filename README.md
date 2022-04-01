@@ -13,7 +13,7 @@
 
 # Description
 
-###The program simulates a Hospital. It keeps track of every Doctor, Patient, Equipment, etc. Each patient has associated to him a medical insurance that, upon his deletion, also gets removed. When a doctor is erased, all of his patients also get removed. An appointment requires a valid doctor, patient and office for it to be created. A piece of equipment is attached to an office. All the entities have certain requirements to their attributes that need to be passed before an object can be added to their respective collection.
+## The program simulates a Hospital. It keeps track of every Doctor, Patient, Equipment, etc. Each patient has associated to him a medical insurance that, upon his deletion, also gets removed. When a doctor is erased, all of his patients also get removed. An appointment requires a valid doctor, patient and office for it to be created. A piece of equipment is attached to an office. All the entities have certain requirements to their attributes that need to be passed before an object can be added to their respective collection.
 
 # To Do List:
 
