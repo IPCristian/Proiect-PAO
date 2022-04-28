@@ -2,18 +2,21 @@ package view;
 
 import domain.*;
 import exceptions.InvalidDataException;
+import service.AuditingService;
 import service.ProjectService;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class ConsoleApp {
 
     private final Scanner s = new Scanner(System.in);
-    private final ProjectService service = new ProjectService();
+    private static final ProjectService service = new ProjectService();
+    private final AuditingService auditService = AuditingService.getInstance();
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws IOException {
         ConsoleApp app = new ConsoleApp();
+        service.initializeData();
         //noinspection InfiniteLoopStatement
         while (true)
         {
@@ -23,7 +26,7 @@ public class ConsoleApp {
         }
     }
 
-    private void showMenu()   // To Do : Add menus for separate entities for a cleaner client experience.
+    private void showMenu()
     {
         System.out.println
                 ("""
@@ -65,8 +68,7 @@ public class ConsoleApp {
         return readOption();
     }
 
-    private void execute(int option)
-    {
+    private void execute(int option) throws IOException {
         switch (option) {
             case 1 -> getDoctors();
             case 2 -> addDoctor();
@@ -84,7 +86,7 @@ public class ConsoleApp {
             case 14 -> addAppointment();
             case 15 -> addEquipment();
             case 16 -> addMedicine();
-            case 17 -> System.exit(0);
+            case 17 -> service.exit();
         }
     }
 
@@ -109,6 +111,7 @@ public class ConsoleApp {
 
         try {
             service.registerNewEquipment(Integer.parseInt(office_id),Integer.parseInt(weight));
+            auditService.logCommand("Added new Equipment");
         } catch (InvalidDataException invalidData) {
             System.out.println(invalidData.getMessage());
         }
@@ -124,6 +127,7 @@ public class ConsoleApp {
                     appointment.getOffice_id() + " | Time: " + appointment.getHour() + ":" +
                     appointment.getMinute());
         }
+        auditService.logCommand("Retrieved Doctor Appointments");
     }
 
     private void addMedicine()
@@ -137,6 +141,7 @@ public class ConsoleApp {
 
         try {
             service.registerNewMedicine(name,dosage,sideEffects);
+            auditService.logCommand("Added new Medicine");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
@@ -159,6 +164,7 @@ public class ConsoleApp {
         try {
             service.registerNewAppoint(Integer.parseInt(doctor_id),Integer.parseInt(patient_id),
                     Integer.parseInt(office_id),Integer.parseInt(hour),Integer.parseInt(minute));
+            auditService.logCommand("Added new Appointment");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
@@ -172,7 +178,7 @@ public class ConsoleApp {
         {
             System.out.print("\n> Patient ID: " + i.getId_person() + " | Expiration Year: " + i.getYear_expire());
         }
-
+        auditService.logCommand("Retrieved Insurances");
     }
 
     private void deletePatient()
@@ -181,6 +187,7 @@ public class ConsoleApp {
         String id_patient = s.nextLine();
         try {
             service.removePatient(Integer.parseInt(id_patient));
+            auditService.logCommand("Delete Patient");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
@@ -193,6 +200,7 @@ public class ConsoleApp {
         String office_id = s.nextLine();
         try {
             service.removeOffice(Integer.parseInt(office_id));
+            auditService.logCommand("Delete Office");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
@@ -205,12 +213,14 @@ public class ConsoleApp {
         String id_doctor = s.nextLine();
         try {
             service.removeDoctor(Integer.parseInt(id_doctor)); // If we remove a doctor, we have to remove all of
+            auditService.logCommand("Delete Doctor");
             for (Patient patient : service.getAllPatients())   // his patients.
             {
                 if (patient.getDoctor_id() == Integer.parseInt(id_doctor))
                 {
                     try {
                         service.removePatient(patient.getId());
+                        auditService.logCommand("Delete Patient");
                     }
                     catch (InvalidDataException invalidData)
                     {
@@ -233,6 +243,7 @@ public class ConsoleApp {
         String diagnosis = s.nextLine();
         try {
             service.updatePatient(Integer.parseInt(id_patient),diagnosis);
+            auditService.logCommand("Update Patient");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
@@ -252,6 +263,7 @@ public class ConsoleApp {
         {
             System.out.println(invalidData.getMessage());
         }
+        auditService.logCommand("Update Doctor");
     }
 
     private void getDoctors()
@@ -264,6 +276,7 @@ public class ConsoleApp {
                     " | Years of Experience: " + d.getYearsOfExperience() + " | Specialization: "
                     + d.getSpecialization());
         }
+        auditService.logCommand("Retrieved Doctors");
     }
 
     private void getPatients()
@@ -276,6 +289,7 @@ public class ConsoleApp {
                     " | Email: " + d.getEmail() + " | Doctor's ID: " + d.getDoctor_id() + " | Diagnosis: "
                     + d.getDiagnosis());
         }
+        auditService.logCommand("Retrieved Patients");
     }
 
     private void getOffices()
@@ -286,6 +300,7 @@ public class ConsoleApp {
             System.out.println("\n> ID: " + m.getId_office() + " | Floor: " + m.getFloor() +
                     " | Door number: " + m.getDoor_number());
         }
+        auditService.logCommand("Retrieved Offices");
     }
 
     private void addDoctor()
@@ -312,6 +327,7 @@ public class ConsoleApp {
             try {
                 service.registerNewDoctor(lastName,firstName.toString(),email,Integer.parseInt(ageString),
                         Integer.parseInt(yearsOfExperienceString),specialization);
+                auditService.logCommand("Added new Doctor");
             } catch (InvalidDataException invalidData)
             {
                 System.out.println(invalidData.getMessage());
@@ -349,6 +365,7 @@ public class ConsoleApp {
             try {
                 service.registerNewPatient(lastName,firstName.toString(),email,Integer.parseInt(ageString),
                         Integer.parseInt(doctors_id),diagnosis,expireYear);
+                auditService.logCommand("Added Patient");
             } catch (InvalidDataException invalidData)
             {
                 System.out.println(invalidData.getMessage());
@@ -369,6 +386,7 @@ public class ConsoleApp {
 
         try {
             service.registerNewOffice(Integer.parseInt(floor),Integer.parseInt(door_number));
+            auditService.logCommand("Added Office");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());

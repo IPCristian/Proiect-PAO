@@ -4,7 +4,10 @@ import domain.*;
 import exceptions.InvalidDataException;
 import persistence.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ProjectService {
@@ -16,11 +19,137 @@ public class ProjectService {
     private final AppointmentRepository appointmentRepository = new AppointmentRepository();
     private final EquipmentRepository equipmentRepository = new EquipmentRepository();
     private final MedicineRepository medicineRepository = new MedicineRepository();
+    private final ReadFileService readService = ReadFileService.getInstance();
+    private final WriteFileService writeService = WriteFileService.getInstance();
     private int doctorCount = 0;
     private int patientCount = 0;
     private int officeCount = 0;
 
-    public void registerNewDoctor(String lastName, String firstName, String email, int age, int yearsOfExperience, String specialization)
+    public void exit() throws IOException {
+        List<String[]> output = new ArrayList<>();
+        Doctor[] doctors = getAllDoctors();
+        for (Doctor doctor : doctors)
+        {
+            String[] doctorData = {doctor.getLastName() + doctor.getFirstName(),doctor.getEmail(),
+                    String.valueOf(doctor.getAge()),String.valueOf(doctor.getYearsOfExperience()),
+                    doctor.getSpecialization()};
+            // System.out.println(Arrays.toString(doctorData));
+            output.add(doctorData);
+        }
+        writeService.writeLines("src/main/java/data/doctors.csv",output);
+        output.clear();
+        Patient[] patients = getAllPatients();
+        for (Patient patient : patients)
+        {
+            int expireYear = insuranceRepository.get(patient.getId()).getYear_expire();
+            String[] patientData = {patient.getLastName() + patient.getFirstName(),patient.getEmail(),
+                    String.valueOf(patient.getAge()),String.valueOf(patient.getDoctor_id()),
+                    patient.getDiagnosis(),String.valueOf(expireYear)};
+            output.add(patientData);
+        }
+        writeService.writeLines("src/main/java/data/patients.csv",output);
+        output.clear();
+        Medical_Office[] offices = getAllOffices();
+        for (Medical_Office office : offices)
+        {
+            String[] officeData = {String.valueOf(office.getFloor()), String.valueOf(office.getDoor_number())};
+            output.add(officeData);
+        }
+        writeService.writeLines("src/main/java/data/offices.csv",output);
+        output.clear();
+        Appointment[] appointments = getAllAppointments();
+        for (Appointment appoint : appointments)
+        {
+            String[] appointData = {String.valueOf(appoint.getHour()),String.valueOf(appoint.getMinute()),
+                    String.valueOf(appoint.getOffice_id()),String.valueOf(appoint.getPatient_id()),
+                    String.valueOf(appoint.getDoctor_id())};
+            output.add(appointData);
+        }
+        writeService.writeLines("src/main/java/data/appointments.csv",output);
+
+        System.exit(0);
+    }
+
+    public void initializeData() throws IOException {
+        List<String[]> inputs = readService.readLines("src/main/java/data/doctors.csv");
+        for (String[] doctor : inputs)
+        {
+            String[] name = doctor[0].split(" ");
+            String lastName = name[0];
+            StringBuilder firstName = new StringBuilder();
+            for (int i=1; i<name.length;i++)
+            {
+                firstName.append(" ").append(name[i]);
+            }
+            String email = doctor[1];
+            String ageString = doctor[2];
+            String yearsOfExperienceString = doctor[3];
+            String specialization = doctor[4];
+
+            if (ageString.matches("^\\d+$"))
+            {
+                try {
+                    registerNewDoctor(lastName,firstName.toString(),email,Integer.parseInt(ageString),
+                            Integer.parseInt(yearsOfExperienceString),specialization);
+                } catch (InvalidDataException invalidData)
+                {
+                    System.out.println(invalidData.getMessage());
+                }
+            }
+        }
+        inputs = readService.readLines("src/main/java/data/patients.csv");
+        for (String[] patient : inputs)
+        {
+            String[] name = patient[0].split(" ");
+            String lastName = name[0];
+            StringBuilder firstName = new StringBuilder();
+            for (int i=1; i<name.length;i++)
+            {
+                firstName.append(" ").append(name[i]);
+            }
+            String email = patient[1];
+            String ageString = patient[2];
+            String doctorId = patient[3];
+            String diagnosis = patient[4];
+            String expireYear = patient[5];
+            try {
+                registerNewPatient(lastName, String.valueOf(firstName),email,Integer.parseInt(ageString),
+                        Integer.parseInt(doctorId),diagnosis,expireYear);
+            } catch (InvalidDataException invalidData) {
+                System.out.println(invalidData.getMessage());
+            }
+        }
+        inputs = readService.readLines("src/main/java/data/offices.csv");
+        for (String[] office : inputs)
+        {
+            String floor = office[0];
+            String doorNr = office[1];
+            try {
+                registerNewOffice(Integer.parseInt(floor),Integer.parseInt(doorNr));
+            } catch (InvalidDataException invalidData) {
+                System.out.println(invalidData.getMessage());
+            }
+        }
+        inputs = readService.readLines("src/main/java/data/appointments.csv");
+        for (String[] appoint : inputs)
+        {
+            String hour = appoint[0];
+            String minute = appoint[1];
+            String officeId = appoint[2];
+            String patientId = appoint[3];
+            String doctorId = appoint[4];
+
+            try {
+                registerNewAppoint(Integer.parseInt(doctorId),Integer.parseInt(patientId),
+                        Integer.parseInt(officeId),Integer.parseInt(hour),Integer.parseInt(minute));
+            } catch (InvalidDataException invalidData) {
+                System.out.println(invalidData.getMessage());
+            }
+        }
+    }
+
+    public void registerNewDoctor(String lastName, String firstName, String email, int age,
+                                  int yearsOfExperience, String specialization)
             throws InvalidDataException
     {
         if (lastName == null || lastName.trim().isEmpty())
@@ -51,7 +180,6 @@ public class ProjectService {
         int id = ++doctorCount;
         Doctor doctor = new Doctor(id, lastName,firstName,email,age,yearsOfExperience,specialization);
         doctorRepository.add(doctor);
-
     }
 
     public void removeOffice(int id) throws InvalidDataException {
@@ -290,6 +418,19 @@ public class ProjectService {
                 {
                     result.add(appointmentRepository.get(i));
                 }
+            }
+        }
+
+        return result.toArray(new Appointment[0]);
+    }
+    public Appointment[] getAllAppointments()
+    {
+        List<Appointment> result = new ArrayList<>();
+        for (int i=0; i < appointmentRepository.getSize();i++)
+        {
+            if (appointmentRepository.get(i) != null)
+            {
+                result.add(appointmentRepository.get(i));
             }
         }
 

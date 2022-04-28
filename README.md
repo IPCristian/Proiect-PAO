@@ -26,6 +26,14 @@
 - [x]  at least one service class that exposes the system's operations
 - [x]  a main class that calls the service's methods
 
+## Stage 2
+
+- [x]  Extend the project from the 1st stage by persisting the data using files:
+>* CSV files will be used to store at least 4 types of objects from the first stage. Each column in the file is separated with a comma. Example: name,surname,age
+>* Generic singleton services will be created for reading and writing from/to files
+>* At system startup, the data will be automatically loaded from the files.
+- [x]  An auditing service will need to be created that will log to a CSV file each time an action from the first stage is performed. Structure of the file: name_of_action,timestamp.
+
 ## Not implemented yet :
 * When a Doctor is removed, his patients are split amongst the other doctors. If there isn't any, then they are deleted.
 * When an Office is removed, all the equipment from inside is split amongst the other offices.

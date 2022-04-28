@@ -1,6 +1,5 @@
 package persistence;
 
-import domain.Appointment;
 import domain.Medicine;
 
 import java.util.Arrays;
