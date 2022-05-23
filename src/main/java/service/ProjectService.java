@@ -5,9 +5,9 @@ import exceptions.InvalidDataException;
 import persistence.*;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class ProjectService {
@@ -21,6 +21,15 @@ public class ProjectService {
     private final MedicineRepository medicineRepository = new MedicineRepository();
     private final ReadFileService readService = ReadFileService.getInstance();
     private final WriteFileService writeService = WriteFileService.getInstance();
+    private CRUDService crudService = null;
+    {
+        try {
+            crudService = CRUDService.getInstance();
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     private int doctorCount = 0;
     private int patientCount = 0;
     private int officeCount = 0;
@@ -30,7 +39,7 @@ public class ProjectService {
         Doctor[] doctors = getAllDoctors();
         for (Doctor doctor : doctors)
         {
-            String[] doctorData = {doctor.getLastName() + doctor.getFirstName(),doctor.getEmail(),
+            String[] doctorData = {doctor.getLastName() + " " + doctor.getFirstName(),doctor.getEmail(),
                     String.valueOf(doctor.getAge()),String.valueOf(doctor.getYearsOfExperience()),
                     doctor.getSpecialization()};
             // System.out.println(Arrays.toString(doctorData));
@@ -42,7 +51,7 @@ public class ProjectService {
         for (Patient patient : patients)
         {
             int expireYear = insuranceRepository.get(patient.getId()).getYear_expire();
-            String[] patientData = {patient.getLastName() + patient.getFirstName(),patient.getEmail(),
+            String[] patientData = {patient.getLastName() + " " + patient.getFirstName(),patient.getEmail(),
                     String.valueOf(patient.getAge()),String.valueOf(patient.getDoctor_id()),
                     patient.getDiagnosis(),String.valueOf(expireYear)};
             output.add(patientData);
@@ -67,9 +76,17 @@ public class ProjectService {
         }
         writeService.writeLines("src/main/java/data/appointments.csv",output);
 
+        try {
+            crudService.Commit();
+            crudService.CloseConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         System.exit(0);
     }
 
+    // Stage 2
     public void initializeData() throws IOException {
         List<String[]> inputs = readService.readLines("src/main/java/data/doctors.csv");
         for (String[] doctor : inputs)
@@ -148,6 +165,78 @@ public class ProjectService {
         }
     }
 
+    // Stage 3
+    public void initializeDBData() {
+
+        System.out.print("\n> Connecting to database...\n");
+        try {
+            ResultSet doctorSet = crudService.Get("doctor");
+            while (doctorSet.next())
+            {
+
+                int id = doctorSet.getInt("id");
+                String lastName = doctorSet.getString("lastName");
+                String firstName = doctorSet.getString("firstName");
+                String email = doctorSet.getString("email");
+                int age = doctorSet.getInt("age");
+                int yearsOfExperience = doctorSet.getInt("yearsOfExperience");
+                String specialization = doctorSet.getString("specialization");
+
+                Doctor d = new Doctor(id,lastName,firstName,email,age,yearsOfExperience,specialization);
+                doctorRepository.add(d);
+                doctorCount++;
+            }
+
+            ResultSet patientSet = crudService.Get("patient");
+            while (patientSet.next())
+            {
+
+                int id = patientSet.getInt("id");
+                String lastName = patientSet.getString("lastName");
+                String firstName = patientSet.getString("firstName");
+                String email = patientSet.getString("email");
+                int age = patientSet.getInt("age");
+                int doctor_id = patientSet.getInt("doctor_id");
+                String diagnosis = patientSet.getString("diagnosis");
+                int insuranceYear = patientSet.getInt("insuranceYear");
+
+                Insurance i = new Insurance(id,insuranceYear);
+                insuranceRepository.add(i);
+                Patient p = new Patient(id,lastName,firstName,email,age,doctor_id,diagnosis,i);
+                patientRepository.add(p);
+                patientCount++;
+            }
+
+            ResultSet officeSet = crudService.Get("office");
+            while (officeSet.next())
+            {
+                int id = officeSet.getInt("id");
+                int floor = officeSet.getInt("floor");
+                int doorNr = officeSet.getInt("door_Number");
+
+                Medical_Office o = new Medical_Office(id,floor,doorNr);
+                officeRepository.add(o);
+                officeCount++;
+            }
+
+            ResultSet appSet = crudService.Get("appointment");
+            while (appSet.next())
+            {
+                int doctor_id = appSet.getInt("doctor_id");
+                int patient_id = appSet.getInt("patient_id");
+                int office_id = appSet.getInt("office_id");
+                int hour = appSet.getInt("hour");
+                int minute = appSet.getInt("minute");
+
+                Appointment a = new Appointment(doctor_id,patient_id,office_id,hour,minute);
+                appointmentRepository.add(a);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void registerNewDoctor(String lastName, String firstName, String email, int age,
                                   int yearsOfExperience, String specialization)
             throws InvalidDataException
@@ -179,6 +268,11 @@ public class ProjectService {
 
         int id = ++doctorCount;
         Doctor doctor = new Doctor(id, lastName,firstName,email,age,yearsOfExperience,specialization);
+        try {
+            crudService.Create(doctor);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         doctorRepository.add(doctor);
     }
 
@@ -188,6 +282,11 @@ public class ProjectService {
             throw new InvalidDataException("\n> Invalid Office ID");
         }
 
+        try {
+            crudService.Delete(id,"office");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         officeRepository.delete(id);
     }
 
@@ -233,6 +332,11 @@ public class ProjectService {
         }
 
         Appointment appointment = new Appointment(doctor_id,patient_id,office_id,hour,minute);
+        try {
+            crudService.Create(appointment);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         appointmentRepository.add(appointment);
     }
 
@@ -260,6 +364,11 @@ public class ProjectService {
 
         int id = ++officeCount;
         Medical_Office office = new Medical_Office(id,floor,door_number);
+        try {
+            crudService.Create(office);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         officeRepository.add(office);
     }
 
@@ -290,6 +399,11 @@ public class ProjectService {
         int id = ++patientCount;
         Insurance insurance = new Insurance(id,Integer.parseInt(expireYear));
         Patient patient = new Patient(id, lastName,firstName,email,age,doctor_id,diagnosis,insurance);
+        try {
+            crudService.Create(patient,insurance);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         patientRepository.add(patient);
         insuranceRepository.add(insurance);
     }
@@ -300,6 +414,11 @@ public class ProjectService {
             throw new InvalidDataException("\n> Invalid Patient ID");
         }
 
+        try {
+            crudService.Delete(id,"patient");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         patientRepository.delete(id);
     }
 
@@ -310,7 +429,13 @@ public class ProjectService {
             throw new InvalidDataException("\n> Invalid Doctor ID");
         }
 
+        try {
+            crudService.Delete(id,"doctor");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         doctorRepository.delete(id);
+
     }
 
     public void updatePatient(int id, String diagnosis) throws InvalidDataException
@@ -319,6 +444,11 @@ public class ProjectService {
             throw new InvalidDataException("\n> Invalid Patient ID");
         }
 
+        try {
+            crudService.Update("patient",id,diagnosis);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         patientRepository.update_diagnosis(id,diagnosis);
     }
 
@@ -329,6 +459,11 @@ public class ProjectService {
             throw new InvalidDataException("\n> Invalid Doctor ID");
         }
 
+        try {
+            crudService.Update("doctor",id,specialization);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         doctorRepository.update_spec(id,specialization);
     }
 
@@ -435,5 +570,32 @@ public class ProjectService {
         }
 
         return result.toArray(new Appointment[0]);
+    }
+
+    public void removeAppointment(int doctor_id, int patient_id, int office_id) throws InvalidDataException {
+        if (!doctorRepository.getID(doctor_id))
+        {
+            throw new InvalidDataException("\n> Invalid Doctor ID");
+        }
+        if (!patientRepository.getID(patient_id))
+        {
+            throw new InvalidDataException("\n> Invalid Patient ID");
+        }
+        if (!officeRepository.getID(office_id))
+        {
+            throw new InvalidDataException("\n> Invalid Office ID");
+        }
+        if (!appointmentRepository.getID(doctor_id,patient_id,office_id))
+        {
+            throw new InvalidDataException(("\n> Invalid Appointment"));
+        }
+
+        try {
+            crudService.Delete(doctor_id,patient_id,office_id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        appointmentRepository.delete(doctor_id,patient_id,office_id);
+
     }
 }

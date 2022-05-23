@@ -4,7 +4,7 @@ public class Patient extends Person {
 
     private int doctor_id;
     private String diagnosis;
-    private Insurance insurance;
+    private final Insurance insurance;
 
     public Patient(int id, String lastName, String firstName, String email, int age, int doctor_id, String diagnosis, Insurance insurance) {
         super(id, lastName, firstName, email, age);

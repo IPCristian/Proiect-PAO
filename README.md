@@ -34,8 +34,9 @@
 >* At system startup, the data will be automatically loaded from the files.
 - [x]  An auditing service will need to be created that will log to a CSV file each time an action from the first stage is performed. Structure of the file: name_of_action,timestamp.
 
-## Not implemented yet :
-* When a Doctor is removed, his patients are split amongst the other doctors. If there isn't any, then they are deleted.
-* When an Office is removed, all the equipment from inside is split amongst the other offices.
-* A query to show all the equipment information for an Office.
-* A way to link Medicine to Patient Diagnosis and/or Appointment.
+## Stage 3
+
+### Database persistence
+
+- [x] Replace the services created in the second stage with others that use JDBC to store the data in a database of your choosing.
+- [x] A service will be created that will expose create/read/update/delete operations for at least 4 of the defined classes.

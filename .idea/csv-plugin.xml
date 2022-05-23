@@ -24,13 +24,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\src\main\java\data\doctors2.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\src\main\java\data\offices.csv">
           <value>
             <Attribute>

@@ -16,7 +16,10 @@ public class ConsoleApp {
 
     public static void main(String[] args) throws IOException {
         ConsoleApp app = new ConsoleApp();
-        service.initializeData();
+        // Stage 2 :
+        // service.initializeData();
+        // Stage 3 :
+        service.initializeDBData();
         //noinspection InfiniteLoopStatement
         while (true)
         {
@@ -31,23 +34,25 @@ public class ConsoleApp {
         System.out.println
                 ("""
                          \n _____________________________________________________________________________________\s
-                         |                Main Menu                ||          (1) Show all doctors           |
+                         |                                    Command Menu                                    |
                          |-----------------------------------------||-----------------------------------------|
-                         |           (2) Add new doctor            ||     (3) Change Doctor Specialization    |
+                         |          (1) Show all doctors           ||           (2) Add new doctor            |
                          |-----------------------------------------||-----------------------------------------|
-                         |            (4) Remove Doctor            ||          (5) Show all patients          |
+                         |     (3) Change Doctor Specialization    ||            (4) Remove Doctor            |
                          |-----------------------------------------||-----------------------------------------|
-                         |           (6) Add new patient           ||      (7) Change Patient Diagnosis       |
+                         |          (5) Show all patients          ||           (6) Add new patient           |
                          |-----------------------------------------||-----------------------------------------|
-                         |           (8) Remove patient            ||        (9) Show all insurances          |
+                         |      (7) Change Patient Diagnosis       ||           (8) Remove patient            |
                          |-----------------------------------------||-----------------------------------------|
-                         |          (10) Show all offices          ||             (11) Add Office             |
+                         |        (9) Show all insurances          ||          (10) Show all offices          |
                          |-----------------------------------------||-----------------------------------------|
-                         |           (12) Remove Office            ||    (13) View Doctor's appointments      |
+                         |             (11) Add Office             ||           (12) Remove Office            |
                          |-----------------------------------------||-----------------------------------------|
-                         |          (14) Add Appointment           ||           (15) Add Equipment            |
+                         |    (13) View Doctor's appointments      ||          (14) Add Appointment           |
                          |-----------------------------------------||-----------------------------------------|
-                         |            (16) Add Medicine            ||                (17) Exit                |
+                         |           (15) Add Equipment            ||            (16) Add Medicine            |
+                         |_________________________________________||_________________________________________|
+                         |        (17) Remove appointment          ||                (18) Exit                |
                          |_________________________________________||_________________________________________|
                         """);
 
@@ -58,7 +63,7 @@ public class ConsoleApp {
     {
         try {
             int option = readInt();
-            if (option >= 1 && option <= 17)
+            if (option >= 1 && option <= 18)
             {
                 return option;
             }
@@ -86,7 +91,8 @@ public class ConsoleApp {
             case 14 -> addAppointment();
             case 15 -> addEquipment();
             case 16 -> addMedicine();
-            case 17 -> service.exit();
+            case 17 -> deleteAppointment();
+            case 18 -> service.exit();
         }
     }
 
@@ -188,6 +194,23 @@ public class ConsoleApp {
         try {
             service.removePatient(Integer.parseInt(id_patient));
             auditService.logCommand("Delete Patient");
+        } catch (InvalidDataException invalidData)
+        {
+            System.out.println(invalidData.getMessage());
+        }
+    }
+
+    private void deleteAppointment()
+    {
+        System.out.print("\n> ID of the Doctor: ");
+        String doctor_id = s.nextLine();
+        System.out.print("\n> ID of the Patient: ");
+        String patient_id = s.nextLine();
+        System.out.print("\n> ID of the Office: ");
+        String office_id = s.nextLine();
+        try {
+            service.removeAppointment(Integer.parseInt(doctor_id),Integer.parseInt(patient_id),Integer.parseInt(office_id));
+            auditService.logCommand("Delete Appointment");
         } catch (InvalidDataException invalidData)
         {
             System.out.println(invalidData.getMessage());
